@@ -1,3 +1,12 @@
+## Conda
+
+Pour recreer l'environement conda :
+```
+conda create --name tp-exp --file requirement.txt
+
+conda activate tp-exp
+```
+
 ## Reconnaissance du locuteur
 
 Dans les problèmes de reconnaissance de lococuteur (reco loc en plus court), nous cherchons à comparer deux fichiers audio pour determiner s'il appartiennent au même locuteur.
