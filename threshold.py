@@ -80,7 +80,13 @@ if __name__=="__main__":
     plt.show()
     
     # print de l'EER et du threshold
-    print(f"Threshold = {thresholds[np.argmax(tpr-fpr)]:.4f}")
+    seuil = thresholds[np.argmax(tpr-fpr)]
+    print(f"Threshold = {seuil:.4f}")
 
     eer = eer_from_ers(fpr, tpr)*100
     print(f'eer : {eer}')
+
+    # Accuracy
+    acc = ((scores < seuil) == veri_labs).sum() / len(veri_labs)
+    acc *= 100
+    print(f"Accuracy : {acc:.2f}%")
