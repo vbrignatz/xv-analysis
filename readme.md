@@ -9,9 +9,9 @@ conda activate tp-exp
 
 ## Reconnaissance du locuteur
 
-Dans les problèmes de reconnaissance de lococuteur (reco loc en plus court), nous cherchons à comparer deux fichiers audio pour determiner s'il appartiennent au même locuteur.
+Dans les problèmes de reconnaissance de locuteur (reco loc en plus court), nous cherchons à comparer deux fichiers audio pour determiner s'il appartiennent au même locuteur.
 
-Pour se faire, nous utilisons un réseau de neurone permettant de transformer un signal audio (aussi appellé *session* ou *utterence*) en un embeddings nommé x-vecteur. 
+Pour se faire, nous utilisons un réseau de neurone permettant de transformer un signal audio (aussi appellé *session* ou *utterence*) en un embeddings nommé x-vecteur (généralement de taille 256 ou 512, **256** dans notre cas). 
 
 ### Fichiers utilisés
 
