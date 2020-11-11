@@ -17,20 +17,26 @@ def decision(xv1, xv2, e=0.73):
 def distortion_1(X, Y, i, v=False):
     """ Cette distortion consiste a eloigner X[i] de Y[i] si X et Y on le meme locuteur,
     ou a raprocher X[i] de Y[i] si X et Y on un locuteur different"""
-    d_init = decision(X, Y)
-    for n in range(25):
+    # sauvegarde de la decision initiale
+    d_init = decision(X, Y) 
+
+    for n in range(25): # boucle for pour eviter les boucles infini
         d = decision(X, Y)
         if v:
             print(f"X[i]={X[i]:.10f} Y[i]={Y[i]:.10f} cosine={cosine(X, Y):.10f} decision={d}")
         
         if d != d_init:
-            return n
+            # si changement de decision, on arrete
+            return n 
 
         if d_init:
+            # si meme locuteur, on eloigne les elements
             X[i] += (X[i] - Y[i])/2
         else:
+            # si locuteurs differents, on rapproche les elements
             X[i] -= (X[i] - Y[i])/2
-    return None
+    
+    return None # en cas d'echec, retourne None
 
 if __name__=="__main__":        
     if(len(sys.argv)!=2):

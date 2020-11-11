@@ -1,16 +1,18 @@
 ## Reconnaissance du locuteur
 
-Dans les problèmes de reco loc, nous cherchons à comparer deux fichiers audio pour determiner s'il appartiennent au meme locuteur.
+Dans les problèmes de reconnaissance de lococuteur (reco loc en plus court), nous cherchons à comparer deux fichiers audio pour determiner s'il appartiennent au même locuteur.
 
-Pour se faire, nous utilisons un réseau de neurone permettant de transformer un signal (aussi appellé *session* ou *utterence*) audio en un embeddings nommé x-vecteur. 
+Pour se faire, nous utilisons un réseau de neurone permettant de transformer un signal audio (aussi appellé *session* ou *utterence*) en un embeddings nommé x-vecteur. 
 
 ### Fichiers utilisés
-Nous utilisons donc des fichiers:
- - contenants les correspondance x-vecteurs session (`data/xv/enroll.txt` et `data/xv/test.txt`)
+
+Lors de la phase de test du modèle, nous utilisons plusieurs type de fichiers:
+ - des fichiers contenants les correspondance x-vecteurs <=> session (`data/xv/enroll.txt` et `data/xv/test.txt`)
  - des fichiers de trials utilisé pour calculer le taux d'erreur d'un système (`data/trial`).
  
-Ces fichiers de trials contiennent sur chaque ligne deux sessions et `target` s'il partagent le meme locuteur, `nontarget` sinon.
+Ces fichiers de trials contiennent sur chaque ligne deux sessions et `target` s'il partagent le meme locuteur, `nontarget` sinon. (cf [FAQ](#Pourquoi-avoir-séparé-les-xv-en-enroll-et-test-?) pour plus d'info)
 
+Exemple de contenu d'un fichier de trials :
 ```
 session123 session321 nontarget
 session69 session420 target
@@ -18,15 +20,17 @@ session69 session420 target
 
 ### Distances
 
-Pour prédire si deux xv partagent le meme locuteur, les x-vecteurs sont comparés en utilisant différentes distances (euclidienne, cosine, ...). Une distance faible signifie que les xvecteurs, et donc les signaux, appartiennent au meme locuteurs. Ainsi, un seuil (threshold) doit etre trouvé : au si une distance est plus grande que ce seuil, les signaux sont prédit comme ne partageant pas le meme locuteur.
+Pour prédire si deux xv partagent le meme locuteur, les x-vecteurs sont comparés en utilisant une distance (euclidienne, cosine, ...). Une distance faible signifie que les xvecteurs, et donc les signaux, appartiennent au meme locuteurs. Ainsi, un seuil (threshold) doit etre trouvé :
+ - Une distance inférieure à ce seuil signifie un locuteur commun.
+ - Une distance supérieure au seuil signifie des locuteurs différents.
 
-Le modele qui a généré les xv utilisé dans ce TP utilisait une distance cosine. Nous allons donc utiliser cette distance pour la suite.
+Le modèle ayant généré les xv utilisé dans ce TP utilise une distance **cosine**. Nous allons donc utiliser cette distance pour la suite.
 
 ### Determiner le seuil
 
 Ceci est réalisé dans le script `threshold.py`. Allez voir c'est commenté 😉.
 
-Pour determiner le seuil, nous comparons les taux de faux positifs (fpr) et de faux négatif (fnr) pour toutes les valeurs de seuil envisageable. Le croisement des courbes de fpr et fnr nous donnent le threshold optimal. Le taux d'erreur obtenu avec ce threshold est nommé EER pour equal error rate.
+Pour determiner le seuil, nous comparons les taux de faux positifs (fpr) et de faux négatif (fnr) pour toutes les valeurs de threshold envisageable. Le croisement des courbes de fpr et fnr nous donnent le threshold optimal (Rq : Ceci revient à trouver le max de la fonction tpr - fpr). Le taux d'erreur obtenu avec ce threshold est nommé EER pour equal error rate.
 
 La commande
 ```
@@ -45,12 +49,17 @@ Avec le seuil calculé, la prise de décision est simple :
 
 ```python
 def decision(xv1, xv2, e=0.73):
+    """ Retourne True si les 2 xv partagent le meme locuteur, False sinon """
     return True if np.abs(cosine(xv1,xv2)) <= e else False
 ```
 
 ## Counterfactual Analysis
 
+Nous cherchons ici si un élément d'un xv porte une information, qui si elle se trouve changée, la décision changerais avec. Nous allons donc utiliser différentes distortion pour changer ces éléments, et voir quelles parties du xv sont plus robuste au variations.
+
 ### Distortion 1
+
+Ceci est réalisé dans le script `distortion1.py`. Allez voir c'est commenté 😉.
 
 Dans cette distortion, nous raproche un element i de X vers l'element correspondant de Y.
 Comme on peut le voir, initialement, la distance cosine étant supérieure à 0.73, la decsion est False signifiant un prédiction de locuteurs différents. 
@@ -94,7 +103,7 @@ X[i]=0.0667810355 Y[i]=0.0667810355 cosine=0.7887627090 decision=False
 X[i]=0.0667810355 Y[i]=0.0667810355 cosine=0.7887627090 decision=False
 ```
 
-Pour le meme locuteur, les valeurs s'éloignent jusqu'à l'infini, mais la distance s'agrandissant tellement, la decision change :
+Pour le meme locuteur, les valeurs s'éloignent jusqu'à l'infini, faisant ainsi croitre la distance, changeant donc la décision :
 ```
 python distortion1.py data/duos/same_loc
 ```
@@ -114,3 +123,16 @@ X[i]=-0.7616009519 Y[i]=-0.0031001409 cosine=0.6964204397 decision=True
 X[i]=-1.1408513575 Y[i]=-0.0031001409 cosine=0.7476976201 decision=False
 ```
 Cette méthode n'a marchée que pour les couples de veteurs partageant le meme locuteur. Effectivement, meme avec un seul element, nous pouvons agrandir la distance fortement, mais pas beaucoup la réduire.
+
+## FAQ
+
+### Pourquoi avoir séparé les xv en enroll et test ?
+
+Deux types de fichiers trials existe. Les trials de type `session session target` et ceux de type `locuteur session target` ou locuteur est la moyenne des xv des sessions appartenant a ce locuteur.
+Ainsi, le fichier `enroll.txt` contiens les xv pour representer les locuteurs, et `test.txt` contient les xv pour representer les sessions.
+
+Il est plus simple de travailler avec des trials `session session target`, car nous pouvons nous passer d'un calcul de moyenne.
+
+### Le fichier `data/trials` a-t-il été fournit dans le TP ?
+
+Non.
